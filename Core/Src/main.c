@@ -15,16 +15,14 @@
   *
   ******************************************************************************
   */
- /* USER CODE END Header */
- /* Includes ------------------------------------------------------------------*/
- #include "main.h"
- #include <stdio.h>
- #include <stdlib.h>
- #include <string.h>
- 
- /* Private includes ----------------------------------------------------------*/
- /* USER CODE BEGIN Includes */
- #define RX_BUF_SIZE 64
+/* USER CODE END Header */
+/* Includes ------------------------------------------------------------------*/
+#include "main.h"
+
+/* Private includes ----------------------------------------------------------*/
+/* USER CODE BEGIN Includes */
+#include "uart.h"
+#define RX_BUF_SIZE 64
 
 /* USER CODE END Includes */
 
@@ -44,13 +42,11 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+I2C_HandleTypeDef hi2c1;
+
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
-uint8_t rx_char;
-char rx_buffer[RX_BUF_SIZE];
-uint8_t rx_index = 0;
-uint8_t cmd_ready = 0;
 
 uint32_t last_blink = 0; 
 
@@ -60,13 +56,8 @@ uint32_t last_blink = 0;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
-
+static void MX_I2C1_Init(void);
 /* USER CODE BEGIN PFP */
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart);
-
-int __io_putchar(int ch);
-
-void processCommands(char *cmd);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -92,39 +83,33 @@ int main(void)
 
   /* USER CODE BEGIN Init */
   /* USER CODE END Init */
-  
+
   /* Configure the system clock */
   SystemClock_Config();
-  
+
   /* USER CODE BEGIN SysInit */
   
   /* USER CODE END SysInit */
-  
+
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
-
+  MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
-  HAL_UART_Receive_IT(&huart2, &rx_char, 1);
-  setvbuf(stdout, NULL, _IONBF, 0);  // Make stdout unbuffered so the prompt prints immediately over UART 
   /* USER CODE END 2 */
-  
+
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  printf("<<< Hominum Debugging Interface v0.0.1 >>>\r\n");
-  printf("Type help for more info: \r\n");
-  printf("~ ");
   
   while (1){
-    if(cmd_ready){
-      cmd_ready = 0;
-      processCommands(rx_buffer);
-      printf("~ ");
-    }
+    UART_Process();
     if(HAL_GetTick() - last_blink >= 100){
         last_blink = HAL_GetTick();
         HAL_GPIO_TogglePin(LED_INBUILT_GPIO_Port, LED_INBUILT_Pin);
     }
+    /* USER CODE END WHILE */
+
+    /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
 }
@@ -166,6 +151,40 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+}
+
+/**
+  * @brief I2C1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_I2C1_Init(void)
+{
+
+  /* USER CODE BEGIN I2C1_Init 0 */
+
+  /* USER CODE END I2C1_Init 0 */
+
+  /* USER CODE BEGIN I2C1_Init 1 */
+
+  /* USER CODE END I2C1_Init 1 */
+  hi2c1.Instance = I2C1;
+  hi2c1.Init.ClockSpeed = 100000;
+  hi2c1.Init.DutyCycle = I2C_DUTYCYCLE_2;
+  hi2c1.Init.OwnAddress1 = 0;
+  hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+  hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+  hi2c1.Init.OwnAddress2 = 0;
+  hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+  hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+  if (HAL_I2C_Init(&hi2c1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN I2C1_Init 2 */
+
+  /* USER CODE END I2C1_Init 2 */
+
 }
 
 /**
@@ -217,6 +236,7 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(LED_INBUILT_GPIO_Port, LED_INBUILT_Pin, GPIO_PIN_RESET);
@@ -234,49 +254,7 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-int __io_putchar(int ch){
-  HAL_UART_Transmit(&huart2, (uint8_t*) &ch, 1, HAL_MAX_DELAY);
-  return ch;
-}
 
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
-  if(huart->Instance == USART2){
-    if(rx_char == '\r' || rx_char == '\n'){
-      rx_buffer[rx_index] = '\0';
-      rx_index = 0;
-      cmd_ready = 1;
-      printf("\r\n");
-    } else{ 
-      if(rx_index < RX_BUF_SIZE - 1){
-        rx_buffer[rx_index++] = rx_char;
-        HAL_UART_Transmit(&huart2, &rx_char, 1, HAL_MAX_DELAY);
-      }
-    }
-
-    HAL_UART_Receive_IT(&huart2, &rx_char, 1);
-  }
-}
-
-void processCommands(char *cmd){
-  char *token = strtok(cmd, " ");
-  if(token == NULL) return;
-
-  if(strcmp(token, "help") == 0){
-    printf("User asked for help! \r\n");
-  } else if (strcmp(token, "get") == 0){
-    printf("Print all tokens! \r\n");
-  } else if (strcmp(token, "set") == 0){
-    char *param = strtok(NULL, " ");
-    char *value = strtok(NULL, " ");
-
-    if(param && value){
-      int val = atoi(value);
-      printf("setting parameter \"%s\" to value -> %d\r\n", param, val);
-    }
-  }else{
-    printf("Invalid Command.\r\n");
-  }
-}
 /* USER CODE END 4 */
 
 /**

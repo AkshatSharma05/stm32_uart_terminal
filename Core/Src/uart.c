@@ -1,0 +1,82 @@
+#include "uart.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+extern UART_HandleTypeDef huart2;
+
+/* Private variables */
+static uint8_t rx_char;
+static char rx_buffer[RX_BUF_SIZE];
+static uint8_t rx_index = 0;
+static uint8_t cmd_ready = 0;
+
+/* Redirect printf */
+int __io_putchar(int ch){
+  HAL_UART_Transmit(&huart2, (uint8_t*) &ch, 1, HAL_MAX_DELAY);
+  return ch;
+}
+
+/* Init */
+void UART_Init(void){
+  HAL_UART_Receive_IT(&huart2, &rx_char, 1);
+  setvbuf(stdout, NULL, _IONBF, 0);
+  printf("<<< Hominum Debugging Interface v0.0.1 >>>\r\n");
+  printf("Type help for more info: \r\n");
+  printf("~ ");
+}
+
+/* Main loop handler */
+void UART_Process(void){
+  if(cmd_ready){
+    cmd_ready = 0;
+    processCommands(rx_buffer);
+    printf("> ");
+  }
+}
+
+/* Interrupt callback */
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
+  if(huart->Instance == USART2){
+
+    if(rx_char == '\r' || rx_char == '\n'){
+      rx_buffer[rx_index] = '\0';
+      rx_index = 0;
+      cmd_ready = 1;
+      printf("\r\n");
+    } 
+    else{ 
+      if(rx_index < RX_BUF_SIZE - 1){
+        rx_buffer[rx_index++] = rx_char;
+        HAL_UART_Transmit(&huart2, &rx_char, 1, HAL_MAX_DELAY);
+      }
+    }
+
+    HAL_UART_Receive_IT(&huart2, &rx_char, 1);
+  }
+}
+
+/* Command parser */
+void processCommands(char *cmd){
+  char *token = strtok(cmd, " ");
+  if(token == NULL) return;
+
+  if(strcmp(token, "help") == 0){
+    printf("User asked for help!\r\n");
+
+  } else if (strcmp(token, "get") == 0){
+    printf("Print all tokens!\r\n");
+
+  } else if (strcmp(token, "set") == 0){
+    char *param = strtok(NULL, " ");
+    char *value = strtok(NULL, " ");
+
+    if(param && value){
+      int val = atoi(value);
+      printf("setting \"%s\" -> %d\r\n", param, val);
+    }
+
+  } else {
+    printf("Invalid Command.\r\n");
+  }
+}
