@@ -22,7 +22,7 @@ void UART_Init(void){
   HAL_UART_Receive_IT(&huart2, &rx_char, 1);
   setvbuf(stdout, NULL, _IONBF, 0);
   printf("<<< Hominum Debugging Interface v0.0.1 >>>\r\n");
-  printf("Type help for more info: \r\n");
+  printf("Type help to get started! \r\n");
   printf("~ ");
 }
 
@@ -62,7 +62,16 @@ void processCommands(char *cmd){
   if(token == NULL) return;
 
   if(strcmp(token, "help") == 0){
-    printf("User asked for help!\r\n");
+    printf(
+        "\r\n"
+        "----------------------\r\n"
+        " Command Interface\r\n"
+        "----------------------\r\n"
+        " help      -> show commands\r\n"
+        " set x val -> set value of param x to val\r\n"
+        " get x     -> read value\r\n"
+        " save      -> save values to memory\r\n"
+    );
 
   } else if (strcmp(token, "get") == 0){
     printf("Print all tokens!\r\n");
