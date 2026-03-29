@@ -53,6 +53,9 @@ UART_HandleTypeDef huart2;
 /* USER CODE BEGIN PV */
 
 uint32_t last_blink = 0; 
+uint32_t last_read = 0; 
+uint8_t imu_stream_enabled = 0;
+
 
 /* USER CODE END PV */
 
@@ -120,14 +123,22 @@ int main(void)
     mpu6050_readAccel(&accel);
     mpu6050_readGyro(&gyro);
   
-    printf("%4d.%02d, %4d.%02d, %4d.%02d, %4d.%02d, %4d.%02d, %4d.%02d\r\n",
-        (int)accel.x, abs((int)(accel.x*100) % 100),
-        (int)accel.y, abs((int)(accel.y*100) % 100),
-        (int)accel.z, abs((int)(accel.z*100) % 100),
-        (int)gyro.x,  abs((int)(gyro.x*100) % 100),
-        (int)gyro.y,  abs((int)(gyro.y*100) % 100),
-        (int)gyro.z,  abs((int)(gyro.z*100) % 100)
-    );
+
+    //Temporary Debug Setup
+    if(imu_stream_enabled && (HAL_GetTick() - last_read >= 50)){
+        last_read = HAL_GetTick();
+
+        printf("\r");  // stay on same line
+
+        printf("%4d.%02d, %4d.%02d, %4d.%02d | %4d.%02d, %4d.%02d, %4d.%02d   ",
+            (int)accel.x, abs((int)(accel.x*100) % 100),
+            (int)accel.y, abs((int)(accel.y*100) % 100),
+            (int)accel.z, abs((int)(accel.z*100) % 100),
+            (int)gyro.x,  abs((int)(gyro.x*100) % 100),
+            (int)gyro.y,  abs((int)(gyro.y*100) % 100),
+            (int)gyro.z,  abs((int)(gyro.z*100) % 100)
+        );
+    }
 
     if(HAL_GetTick() - last_blink >= 100){
         last_blink = HAL_GetTick();
