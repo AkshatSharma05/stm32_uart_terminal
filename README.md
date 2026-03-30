@@ -1,4 +1,4 @@
-# STM32 UART Terminal & IMU Interface
+# STM32 UART Terminal
 
 ## Overview
 This project focuses on building a simple and interactive debugging system using an STM32 microcontroller. An MPU6050 IMU is interfaced over I2C, and sensor data is processed using a complementary filter to obtain stable orientation estimates.

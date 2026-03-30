@@ -69,6 +69,7 @@ static void MX_I2C1_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+float alpha = 0.9;
 /* USER CODE END 0 */
 
 /**
@@ -130,7 +131,7 @@ int main(void)
         mpu6050_readGyro(&gyro);
         rpy_acc = mpu6050_rpy_accel(&accel, NULL);
         rpy_gyro = mpu6050_rpy_gyro(&gyro);
-        rpy_compl = mpu6050_rpy_compl(&rpy_acc, &rpy_gyro, 0.9);
+        rpy_compl = mpu6050_rpy_compl(&rpy_acc, &rpy_gyro, alpha);
         last_read = HAL_GetTick();
 
         printf("\r");  // stay on same line (start of same line)
