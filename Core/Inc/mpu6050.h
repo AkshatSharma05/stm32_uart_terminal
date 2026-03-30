@@ -12,6 +12,7 @@
 
 #define ACCEL_CONFIG    0x1C
 #define GYRO_CONFIG     0x1B
+#define CONFIG          0x1A
 
 #define ACCEL_SCALE     16384.0f
 #define GYRO_SCALE      32.8f
@@ -30,7 +31,7 @@ HAL_StatusTypeDef mpu6050_readGyro(MPU6050_Data *gyro);
 
 MPU6050_Data mpu6050_rpy_accel(MPU6050_Data *accel, MPU6050_Data *gyro);
 MPU6050_Data mpu6050_rpy_gyro(MPU6050_Data *gyro);
-MPU6050_Data mpu6050_rpy_fused(MPU6050_Data *accel, MPU6050_Data *gyro);
+MPU6050_Data mpu6050_rpy_compl(MPU6050_Data *accel, MPU6050_Data *gyro, float alpha);
 
 HAL_StatusTypeDef mpu6050_calibrateGyro(void);
 

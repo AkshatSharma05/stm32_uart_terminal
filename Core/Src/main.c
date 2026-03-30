@@ -103,7 +103,7 @@ int main(void)
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
   mpu6050_init();
-  HAL_Delay(100);
+  HAL_Delay(20);
   mpu6050_calibrateGyro();
   last_read = HAL_GetTick();
 
@@ -112,7 +112,7 @@ int main(void)
   MPU6050_Data gyro;
   MPU6050_Data rpy_acc;
   MPU6050_Data rpy_gyro;
-
+  MPU6050_Data rpy_compl;
   
   UART_Init();
   /* USER CODE END 2 */
@@ -130,27 +130,35 @@ int main(void)
         mpu6050_readGyro(&gyro);
         rpy_acc = mpu6050_rpy_accel(&accel, NULL);
         rpy_gyro = mpu6050_rpy_gyro(&gyro);
+        rpy_compl = mpu6050_rpy_compl(&rpy_acc, &rpy_gyro, 0.9);
         last_read = HAL_GetTick();
 
         printf("\r");  // stay on same line (start of same line)
 
+        // printf(
+        // "\rACC[%4d.%02d %4d.%02d %4d.%02d] | GYR[%4d.%02d %4d.%02d %4d.%02d]  |  RPY_A[%4d.%02d %4d.%02d %4d.%02d] | RPY_G[%4d.%02d %4d.%02d %4d.%02d]   ",
+        //     (int)accel.x, abs((int)(accel.x*100)%100),
+        //     (int)accel.y, abs((int)(accel.y*100)%100),
+        //     (int)accel.z, abs((int)(accel.z*100)%100),
+
+        //     (int)gyro.x, abs((int)(gyro.x*100)%100),
+        //     (int)gyro.y, abs((int)(gyro.y*100)%100),
+        //     (int)gyro.z, abs((int)(gyro.z*100)%100),
+
+        //     (int)rpy_acc.x, abs((int)(rpy_acc.x*100)%100),
+        //     (int)rpy_acc.y, abs((int)(rpy_acc.y*100)%100),
+        //     (int)rpy_acc.z, abs((int)(rpy_acc.z*100)%100),
+
+        //     (int)rpy_gyro.x, abs((int)(rpy_gyro.x*100)%100),
+        //     (int)rpy_gyro.y, abs((int)(rpy_gyro.y*100)%100),
+        //     (int)rpy_gyro.z, abs((int)(rpy_gyro.z*100)%100)
+        // );
+
         printf(
-        "\rACC[%4d.%02d %4d.%02d %4d.%02d] | GYR[%4d.%02d %4d.%02d %4d.%02d]  |  RPY_A[%4d.%02d %4d.%02d %4d.%02d] | RPY_G[%4d.%02d %4d.%02d %4d.%02d]   ",
-            (int)accel.x, abs((int)(accel.x*100)%100),
-            (int)accel.y, abs((int)(accel.y*100)%100),
-            (int)accel.z, abs((int)(accel.z*100)%100),
-
-            (int)gyro.x, abs((int)(gyro.x*100)%100),
-            (int)gyro.y, abs((int)(gyro.y*100)%100),
-            (int)gyro.z, abs((int)(gyro.z*100)%100),
-
-            (int)rpy_acc.x, abs((int)(rpy_acc.x*100)%100),
-            (int)rpy_acc.y, abs((int)(rpy_acc.y*100)%100),
-            (int)rpy_acc.z, abs((int)(rpy_acc.z*100)%100),
-
-            (int)rpy_gyro.x, abs((int)(rpy_gyro.x*100)%100),
-            (int)rpy_gyro.y, abs((int)(rpy_gyro.y*100)%100),
-            (int)rpy_gyro.z, abs((int)(rpy_gyro.z*100)%100)
+        "\rRPY[%4d.%02d %4d.%02d %4d.%02d]   ",
+            (int)rpy_compl.x, abs((int)(rpy_compl.x*100)%100),
+            (int)rpy_compl.y, abs((int)(rpy_compl.y*100)%100),
+            (int)rpy_compl.z, abs((int)(rpy_compl.z*100)%100)
         );
     }
 

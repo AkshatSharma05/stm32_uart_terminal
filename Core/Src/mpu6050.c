@@ -5,7 +5,7 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-#define CALIB_SAMPLES 500
+#define CALIB_SAMPLES 100
 
 extern I2C_HandleTypeDef hi2c1;
 
@@ -29,6 +29,12 @@ HAL_StatusTypeDef mpu6050_init(){
     data = 0x10;
     status =  HAL_I2C_Mem_Write(&hi2c1, (uint16_t)MPU6050_ADDR, GYRO_CONFIG, I2C_MEMADD_SIZE_8BIT, &data, 1, 100);
     if(status != HAL_OK) return status;
+
+    //ENABLE DLPF
+    data = 0x02;
+    status =  HAL_I2C_Mem_Write(&hi2c1, (uint16_t)MPU6050_ADDR, CONFIG, I2C_MEMADD_SIZE_8BIT, &data, 1, 100);
+    if(status != HAL_OK) return status;
+
 
     return status;
 } 
@@ -100,7 +106,6 @@ HAL_StatusTypeDef mpu6050_readGyro(MPU6050_Data *gyro){
 MPU6050_Data mpu6050_rpy_accel(MPU6050_Data *accel, MPU6050_Data *gyro){
     MPU6050_Data rpy;
 
-    // Convert radians to degrees
     rpy.x = atan2(accel->y, accel->z) * (180.0 / M_PI);
     rpy.y = atan2(-accel->x, sqrt(accel->y*accel->y + accel->z*accel->z)) * (180.0 / M_PI);
 
@@ -149,6 +154,17 @@ MPU6050_Data mpu6050_rpy_gyro(MPU6050_Data *gyro) {
     prev_x = rpy.x;
     prev_y = rpy.y;
     prev_z = rpy.z;
+
+    return rpy;
+}
+
+MPU6050_Data mpu6050_rpy_compl(MPU6050_Data *accel, MPU6050_Data *gyro, float alpha){
+    // x' = x_a(1-a) + x_g(a)
+    MPU6050_Data rpy = {0,0,0};
+
+    rpy.x = alpha * (gyro->x) + (1-alpha) * accel->x;
+    rpy.y = alpha * (gyro->y) + (1-alpha) * accel->y;
+    rpy.z = gyro->z;
 
     return rpy;
 }
